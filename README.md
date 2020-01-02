@@ -4,7 +4,7 @@ aE2 (Arduino-E2)
 A simple Arduino E2 bus library.
 
 ## E2Device
-This library allows you to communicate with sensor devices using the propiatary E2 bus protocol. This protocol is used by sensors from the manufacturer [E + E Elektronik Ges.m.b.H] (https://www.epluse.com) and is quite similar to the I2C bus. It is possible to control devices with two general-purpose I/O pins.
+This library allows you to communicate with sensor devices using the proprietary E2 bus protocol. This protocol is used by sensors from the manufacturer [E + E Elektronik Ges.m.b.H](https://www.epluse.com) and is quite similar to the I2C bus. It is possible to control devices with two general-purpose I/O pins.
 
 This bit-banging library is based on a similar software by <romain.bazile@gromain.me> hosted at <https://github.com/ubiant/E2>. The key differences are subsumized in the notes below. The original library was  never released.
 
@@ -50,5 +50,5 @@ Support of CO2 sensors and on-sensor memory modification was removed from this v
 
 ### Usage
 
-Consult the provided examples which show the use of this class.
+Consult the provided example which show the use of this class.
 
