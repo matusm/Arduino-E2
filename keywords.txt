@@ -1,0 +1,8 @@
+E2Device	KEYWORD1
+getTemperature	KEYWORD2
+getHumidity	KEYWORD2
+getStatus	KEYWORD2
+getSensorType	KEYWORD2
+getSerialNumber	KEYWORD2
+getFirmware	KEYWORD2
+getSensorDescription KEYWORD2
