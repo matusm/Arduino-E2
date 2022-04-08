@@ -18,6 +18,7 @@
 bool errorFlag;	// set by readByteFromSlave() only
 unsigned char lowByte;
 unsigned char highByte;
+unsigned int transmitterGroup;
 
 // the constructor
 E2Device::E2Device(int pinSDA, int pinSCL)
@@ -27,7 +28,7 @@ E2Device::E2Device(int pinSDA, int pinSCL)
 }
 
 /* Private Functions */
-/* Arduino speed test: mean time to execute: 10µs */
+/* Arduino speed test: mean time to execute: 10ï¿½s */
 void E2Device::set_SDA(void) // set port-pin (pinSDA)
 {
   pinMode(_pinSDA, OUTPUT);
@@ -88,9 +89,9 @@ void E2Device::E2Bus_send(unsigned char value) // send Byte to E2 Interface
     clear_SCL();
     e2delay(10*DELAY_FACTOR);
     if ((value & maske) != 0)
-    {set_SDA();}
+      {set_SDA();}
     else
-    {clear_SDA();}
+      {clear_SDA();}
     e2delay(20*DELAY_FACTOR);
     set_SCL();
     maske >>= 1;
@@ -111,7 +112,7 @@ unsigned char E2Device::E2Bus_read(void) // read Byte from E2 Interface
     set_SCL();
     e2delay(15*DELAY_FACTOR);
     if (read_SDA())
-    {data_in |= maske;}
+      {data_in |= maske;}
     e2delay(15*DELAY_FACTOR);
     clear_SCL();
   }
@@ -222,46 +223,63 @@ unsigned char E2Device::getStatus(void)
 String E2Device::getSensorType()
 {
   String designation = UNKNOWN_STRING;
-  unsigned char gLow = readByteFromSlave(0x11);
-  if (errorFlag) return designation;
-  unsigned char gHigh = readByteFromSlave(0x41);
-  if (errorFlag) return designation;
-  unsigned char subG = readByteFromSlave(0x21);
-  if (errorFlag) return designation;
-  if (gHigh == 0x55)
-    gHigh = 0x00; // (?)
-  unsigned int groupNumber = combineTwoBytes(gLow, gHigh);
-  if(groupNumber <= 9)
-    designation = "EE0" + String(groupNumber);
+  transmitterGroup = 0;
+  unsigned char groupLowByte = readByteFromSlave(0x11);
+  if (errorFlag) return UNKNOWN_STRING;
+  if (groupLowByte == 0x55 || groupLowByte == 0xFF) return UNKNOWN_STRING;
+  unsigned char groupHighByte = readByteFromSlave(0x41);
+  if (errorFlag) return UNKNOWN_STRING;
+  if (groupHighByte == 0x55 || groupHighByte == 0xFF) groupHighByte = 0x00;
+  unsigned char subGroupByte = readByteFromSlave(0x21);
+  if (errorFlag) return UNKNOWN_STRING;
+  unsigned int productSeries = combineTwoBytes(groupLowByte, groupHighByte);
+  transmitterGroup = productSeries;
+  unsigned int outputType = (subGroupByte >> 4) & 0x0F;
+  unsigned int ftType = subGroupByte & 0x0F;
+  if(productSeries <= 9)
+    designation = "EE0" + String(productSeries);
   else
-    designation = "EE" + String(groupNumber);
-  designation += "-";
-  designation += String(subG);
+    designation = "EE" + String(productSeries);
+  if(outputType != 0)
+    designation += "-" + String(outputType);
+  designation += " FT" + String(ftType);
   return designation;
 }
 /*-------------------------------------------------------------------------*/
 // undocumented! may only work with EE-07 sensors!
 String E2Device::getSerialNumber()
 {
-  // magic command
-  E2Bus_start();
-  E2Bus_send(0x40);
-  check_ack();
-  E2Bus_send(0x00);
-  check_ack();
-  E2Bus_send(0x84);
-  check_ack();
-  E2Bus_send(0xC4);
-  check_ack();
-  E2Bus_stop();
-  // reading 14 characters
-  String designation = "";
-  for (int i = 0; i < 14; i++)
+  String reply = "";
+  if(transmitterGroup == 8)
   {
-    designation += (char)readByteFromSlave(0x01);
-    if (errorFlag) return UNKNOWN_STRING;
+
   }
-  return designation;
+  if(transmitterGroup == 3)
+  {
+
+  }
+  if(transmitterGroup == 7)
+  {
+    // magic command
+    E2Bus_start();
+    E2Bus_send(0x40);
+    check_ack();
+    E2Bus_send(0x00);
+    check_ack();
+    E2Bus_send(0x84);
+    check_ack();
+    E2Bus_send(0xC4);
+    check_ack();
+    E2Bus_stop();
+    // reading 14 characters
+    for (int i = 0; i < 14; i++)
+    {
+      reply += (char)readByteFromSlave(0x01);
+      if (errorFlag) return UNKNOWN_STRING;
+    }
+    return reply;
+  }
+  return UNKNOWN_STRING;
 }
 /*-------------------------------------------------------------------------*/
 // undocumented! may only work with EE-07 sensors!
